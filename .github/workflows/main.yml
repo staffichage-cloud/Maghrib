@@ -1,0 +1,67 @@
+name: Build Maghribb App
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Generate and Build App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install App Builder
+        run: npm install -g cordova
+
+      - name: Create App & Set URL
+        run: |
+          # 1. Creates a blank app framework
+          cordova create app com.maghribb.app "Maghribb"
+          cd app
+          
+          # 2. Adds the Android system
+          cordova platform add android
+          
+          # 3. Injects your website URL into the app!
+          sed -i 's|<content src="index.html" />|<content src="https://maghribb.netlify.app/" />|g' config.xml
+          
+          # 4. Allows the app to browse your website properly
+          sed -i 's|</widget>|    <allow-navigation href="*" />\n</widget>|g' config.xml
+
+      - name: Apply Your Icon
+        run: |
+          cd app
+          # Checks if you uploaded icon.png and applies it
+          if [ -f "../icon.png" ]; then
+            echo "Icon found! Adding to app..."
+            cp ../icon.png icon.png
+            sed -i 's|</widget>|    <icon src="icon.png" />\n</widget>|g' config.xml
+          else
+            echo "No icon.png found, using default Cordova icon."
+          fi
+
+      - name: Build Android APK
+        run: |
+          cd app
+          cordova build android
+
+      - name: Upload Final APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Maghribb-App-Ready-To-Install
+          path: app/platforms/android/app/build/outputs/apk/debug/*.apk
