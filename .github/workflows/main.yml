@@ -37,10 +37,13 @@ jobs:
           # 2. Adds the Android system
           cordova platform add android
           
-          # 3. Injects your website URL into the app!
+          # 3. Add Geolocation Plugin (This adds Android location permissions)
+          cordova plugin add cordova-plugin-geolocation
+          
+          # 4. Injects your website URL into the app!
           sed -i 's|<content src="index.html" />|<content src="https://maghribb.netlify.app/" />|g' config.xml
           
-          # 4. Allows the app to browse your website properly
+          # 5. Allows the app to browse your website properly
           sed -i 's|</widget>|    <allow-navigation href="*" />\n</widget>|g' config.xml
 
       - name: Apply Your Icon
